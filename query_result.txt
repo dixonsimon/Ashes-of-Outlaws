@@ -1,0 +1,6 @@
+Animator Avatar Bone Mapping:
+- Jaw: C_jaw
+- LeftEye: L_eye
+- RightEye: R_eye
+- Head: head
+- Neck: neck_01

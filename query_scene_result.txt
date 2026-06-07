@@ -1,0 +1,60 @@
+Player GameObject: Player_Bandit
+Components on Player:
+- Transform
+- Animator
+- CharacterController
+- AdvancedPlayerController
+Animator: applyRootMotion=False, hasTransformHierarchy=True
+Head Bone Children Hierarchy:
+  - faceAttach (localPos=(-0.01, 0.00, 0.00), localRot=(358.71, 315.28, 358.78))
+    - C_brow_mid (localPos=(-0.06, -0.11, 0.06), localRot=(0.66, 315.78, 0.44))
+    - C_jaw (localPos=(0.01, -0.01, 0.00), localRot=(358.20, 314.99, 0.27))
+      - C_lip_lower_mid (localPos=(0.00, -0.10, -0.01), localRot=(24.68, 358.46, 0.40))
+      - L_lip_lower_outer (localPos=(-0.02, -0.10, -0.01), localRot=(19.66, 349.99, 321.34))
+      - R_lip_lower_outer (localPos=(0.02, -0.10, -0.01), localRot=(19.66, 10.01, 38.66))
+      - teeth_lower (localPos=(0.00, -0.07, -0.01), localRot=(0.00, 0.00, 0.00))
+      - tongue (localPos=(0.00, -0.04, -0.01), localRot=(354.55, 0.00, 0.00))
+        - tongue1 (localPos=(0.00, -0.03, 0.00), localRot=(0.00, 0.00, 0.00))
+    - C_lip_upper_mid (localPos=(0.00, -0.11, 0.00), localRot=(347.71, 315.03, 0.35))
+    - C_nose_bridge (localPos=(-0.03, -0.12, 0.03), localRot=(332.26, 314.93, 0.28))
+    - L_brow_mid (localPos=(-0.08, -0.10, 0.04), localRot=(353.15, 318.68, 338.22))
+    - L_brow_outer (localPos=(-0.10, -0.07, 0.01), localRot=(344.45, 310.88, 296.06))
+    - L_cheek_bot (localPos=(-0.03, -0.07, -0.04), localRot=(313.52, 264.31, 316.85))
+    - L_cheek_inner (localPos=(-0.06, -0.09, -0.02), localRot=(321.82, 278.95, 312.46))
+    - L_eye (localPos=(-0.06, -0.08, 0.02), localRot=(0.52, 135.00, 89.71))
+      - L_lower_eyelid (localPos=(0.00, 0.00, 0.00), localRot=(0.00, 0.00, 0.00))
+      - L_upper_eyelid (localPos=(0.00, 0.00, 0.00), localRot=(0.00, 0.00, 0.00))
+    - L_lip_corner (localPos=(-0.01, -0.10, -0.03), localRot=(358.32, 309.80, 321.47))
+    - L_lip_upper_outer (localPos=(-0.01, -0.11, -0.02), localRot=(351.33, 309.05, 323.64))
+    - L_nostril (localPos=(-0.03, -0.11, 0.01), localRot=(340.31, 316.85, 345.44))
+    - R_brow_mid (localPos=(-0.03, -0.10, 0.08), localRot=(6.81, 131.25, 157.67))
+    - R_brow_outer (localPos=(-0.01, -0.07, 0.10), localRot=(15.59, 138.96, 115.49))
+    - R_cheek_bot (localPos=(0.04, -0.07, 0.04), localRot=(46.90, 185.32, 136.34))
+    - R_cheek_inner (localPos=(0.02, -0.09, 0.06), localRot=(38.50, 170.70, 131.89))
+    - R_eye (localPos=(-0.02, -0.08, 0.06), localRot=(359.48, 315.00, 270.25))
+      - R_lower_eyelid (localPos=(0.00, 0.00, 0.00), localRot=(0.00, 0.00, 0.00))
+      - R_upper_eyelid (localPos=(0.00, 0.00, 0.00), localRot=(0.00, 0.00, 0.00))
+    - R_lip_corner (localPos=(0.03, -0.10, 0.01), localRot=(358.27, 320.18, 39.07))
+    - R_lip_upper_outer (localPos=(0.02, -0.11, 0.01), localRot=(351.27, 320.87, 36.91))
+    - R_nostril (localPos=(-0.01, -0.11, 0.03), localRot=(19.67, 132.96, 164.86))
+    - teeth_upper (localPos=(0.00, -0.08, 0.00), localRot=(0.66, 315.00, 0.27))
+  - hair_curls_A_l_01 (localPos=(-0.11, -0.09, -0.06), localRot=(48.14, 185.16, 98.23))
+  - hair_curls_A_r_01 (localPos=(-0.11, -0.09, 0.06), localRot=(312.49, 175.45, 278.15))
+  - hair_curls_B_l_01 (localPos=(-0.07, -0.02, -0.08), localRot=(10.69, 180.48, 91.13))
+  - hair_curls_B_r_01 (localPos=(-0.06, -0.01, 0.09), localRot=(355.21, 180.17, 271.12))
+  - hat (localPos=(-0.13, 0.02, 0.00), localRot=(359.68, 0.27, 342.10))
+  - ponytail_01 (localPos=(-0.02, 0.09, -0.04), localRot=(315.16, 208.69, 108.36))
+    - ponytail_02 (localPos=(0.00, 0.07, 0.00), localRot=(320.81, 346.45, 23.48))
+      - ponytail_03 (localPos=(0.00, 0.10, 0.00), localRot=(349.46, 357.95, 355.60))
+        - ponytail_04 (localPos=(0.00, 0.11, 0.00), localRot=(2.80, 352.79, 0.17))
+Main Camera GameObject: Main Camera
+Components on Camera:
+- Transform
+- Camera
+- AudioListener
+- UniversalAdditionalCameraData
+- BanditCameraOrbit
+  - distance=4.5
+  - targetOffset=(0.00, 1.20, 0.00)
+  - xSpeed=150, ySpeed=150
+  - target=Player_Bandit

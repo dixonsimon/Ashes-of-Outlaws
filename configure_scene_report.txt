@@ -1,0 +1,9 @@
+ConfigureSceneElements Execution Report:
+- Reimporting bandit animations...
+  Successfully reimported animations.
+- Camera found: Main Camera
+  Adjusted BanditCameraOrbit settings: distance=2.5, targetOffset=(0.40, 1.35, 0.00)
+- Player found: Player_Bandit
+  Added BanditFacialAnimator component to Player_Bandit.
+- Active Scene: Assets/AllSkyFree/Cold Sunset/Cold Sunset.unity
+  Scene save result: True
