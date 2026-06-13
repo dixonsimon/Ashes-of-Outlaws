@@ -16,7 +16,16 @@ public class AdvancedPlayerController : MonoBehaviour
     private Animator animator;
     private float verticalVelocity;
     private Camera mainCamera;
+    
     private Transform hipsBone;
+    private Transform rootBone;
+    private Vector3 hipsOriginalPos;
+    private Quaternion hipsOriginalRot;
+    private Vector3 rootOriginalPos;
+    private Quaternion rootOriginalRot;
+    private float currentSpeed;
+    private Vector3 currentMoveDirection;
+    private float pelvisOriginalPlayerLocalX;
 
     void Start()
     {
@@ -26,7 +35,20 @@ public class AdvancedPlayerController : MonoBehaviour
         
         if (animator != null)
         {
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             hipsBone = animator.GetBoneTransform(HumanBodyBones.Hips);
+            if (hipsBone != null)
+            {
+                hipsOriginalPos = hipsBone.localPosition;
+                hipsOriginalRot = hipsBone.localRotation;
+                pelvisOriginalPlayerLocalX = transform.InverseTransformPoint(hipsBone.position).x;
+                rootBone = hipsBone.parent;
+                if (rootBone != null)
+                {
+                    rootOriginalPos = rootBone.localPosition;
+                    rootOriginalRot = rootBone.localRotation;
+                }
+            }
         }
         
         // Setup Foliage Touch Bending dynamically
@@ -57,8 +79,8 @@ public class AdvancedPlayerController : MonoBehaviour
         input = input.normalized;
 
         // Camera relative movement
-        Vector3 moveDirection = Vector3.zero;
-        if (mainCamera != null)
+        Vector3 targetMoveDirection = Vector3.zero;
+        if (mainCamera != null && input.magnitude > 0.01f)
         {
             Vector3 camForward = mainCamera.transform.forward;
             Vector3 camRight = mainCamera.transform.right;
@@ -66,17 +88,33 @@ public class AdvancedPlayerController : MonoBehaviour
             camRight.y = 0;
             camForward.Normalize();
             camRight.Normalize();
-            moveDirection = camForward * input.y + camRight * input.x;
+            targetMoveDirection = camForward * input.y + camRight * input.x;
         }
-        else
+        else if (input.magnitude > 0.01f)
         {
-            moveDirection = new Vector3(input.x, 0, input.y);
+            targetMoveDirection = new Vector3(input.x, 0, input.y);
         }
 
-        float speed = input.magnitude > 0 ? (isRunning ? runSpeed : walkSpeed) : 0f;
+        if (input.magnitude > 0.01f)
+        {
+            // Smoothly slerp direction when changing inputs
+            if (currentMoveDirection.magnitude < 0.01f)
+            {
+                currentMoveDirection = targetMoveDirection;
+            }
+            else
+            {
+                currentMoveDirection = Vector3.Slerp(currentMoveDirection, targetMoveDirection, 12f * Time.deltaTime).normalized;
+            }
+        }
 
-        // Calculate velocity (directly along camera-relative direction)
-        Vector3 velocity = moveDirection * speed;
+        float targetSpeed = input.magnitude > 0.01f ? (isRunning ? runSpeed : walkSpeed) : 0f;
+        
+        // Smoothly accelerate and decelerate to synchronize physical speed with animator state
+        currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, (targetSpeed > currentSpeed ? 12f : 16f) * Time.deltaTime);
+
+        // Calculate velocity (allows smooth deceleration along the last heading when keys are released)
+        Vector3 velocity = currentMoveDirection * currentSpeed;
 
         if (controller.isGrounded)
         {
@@ -91,18 +129,24 @@ public class AdvancedPlayerController : MonoBehaviour
         // Move the controller
         controller.Move(velocity * Time.deltaTime);
 
-        // Rotation - rotate towards the movement direction smoothly
-        if (moveDirection.magnitude > 0.01f)
+        // Rotation - rotate towards the movement direction smoothly when active
+        if (currentMoveDirection.magnitude > 0.01f && currentSpeed > 0.1f)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            Quaternion targetRotation = Quaternion.LookRotation(currentMoveDirection);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
+
+        // Reset movement vector completely when stopped
+        if (currentSpeed < 0.01f)
+        {
+            currentMoveDirection = Vector3.zero;
         }
 
         // Animator parameters
         if (animator != null)
         {
             // Speed thresholds: 0 = Idle, 2 = Walk, 5.33 = Run
-            animator.SetFloat("Speed", speed, 0.1f, Time.deltaTime);
+            animator.SetFloat("Speed", currentSpeed);
         }
     }
 
@@ -132,17 +176,29 @@ public class AdvancedPlayerController : MonoBehaviour
 
     void LateUpdate()
     {
-        // Stabilize hips side-to-side locomotion sway to keep path visually straight
-        if (hipsBone != null && animator != null)
+        // Stabilize intermediate root bone to prevent root-level translation/rotation sway.
+        if (rootBone != null && rootBone.name == "root")
         {
-            float speed = animator.GetFloat("Speed");
-            if (speed > 0.05f)
-            {
-                Vector3 localPos = hipsBone.localPosition;
-                // Smoothly blend local X to 0 based on speed to avoid sudden snaps
-                localPos.x = Mathf.Lerp(localPos.x, 0f, 10f * Time.deltaTime);
-                hipsBone.localPosition = localPos;
-            }
+            rootBone.localPosition = Vector3.zero;
+            rootBone.localRotation = Quaternion.identity;
+        }
+
+        // Stabilize hips (pelvis) bone to prevent lateral drift/weaving while running
+        if (hipsBone != null)
+        {
+            // Convert pelvis position to player local space
+            Vector3 playerLocalPos = transform.InverseTransformPoint(hipsBone.position);
+
+            // Damp the X-coordinate (lateral sway) by 75% towards its original offset (which is 0)
+            float targetX = Mathf.Lerp(pelvisOriginalPlayerLocalX, playerLocalPos.x, 0.25f);
+            playerLocalPos.x = Mathf.Lerp(playerLocalPos.x, targetX, 10f * Time.deltaTime);
+
+            // Convert back to world space and apply
+            hipsBone.position = transform.TransformPoint(playerLocalPos);
+
+            // Damp hips local rotation towards its original bind-pose rotation by 60%
+            Quaternion targetRot = Quaternion.Slerp(hipsBone.localRotation, hipsOriginalRot, 0.4f); // 0.4f means keeping 40% of rotation (damped by 60%)
+            hipsBone.localRotation = Quaternion.Slerp(hipsBone.localRotation, targetRot, 8f * Time.deltaTime);
         }
     }
 }

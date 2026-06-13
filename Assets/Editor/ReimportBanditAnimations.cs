@@ -35,6 +35,10 @@ public static class ReimportBanditAnimations
             importer.animationType = ModelImporterAnimationType.Human;
             importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
             importer.importAnimation = true;
+            
+            // Disable keyframe compression to ensure full precision and smooth play
+            importer.animationCompression = ModelImporterAnimationCompression.Off;
+            importer.resampleCurves = true;
 
             // 2. Setup Clip Animations (Loop settings)
             ModelImporterClipAnimation[] clips = importer.defaultClipAnimations;

@@ -25,6 +25,10 @@ public class BanditCameraOrbit : MonoBehaviour
     private Vector3 currentRotation;
     private Vector3 rotationVelocity;
 
+    [Header("Position Smoothing")]
+    public float positionSmoothTime = 0.05f;
+    private Vector3 cameraPositionVelocity;
+
     void Start()
     {
         Vector3 angles = transform.eulerAngles;
@@ -68,12 +72,14 @@ public class BanditCameraOrbit : MonoBehaviour
         currentRotation = Vector3.SmoothDamp(currentRotation, new Vector3(y, x, 0), ref rotationVelocity, smoothTime);
         Quaternion rotation = Quaternion.Euler(currentRotation.x, currentRotation.y, 0);
 
-        // Target camera position
-        Vector3 targetPivot = target.position + targetOffset;
-        Vector3 position = targetPivot - (rotation * Vector3.forward * distance);
+        // Target camera position relative to camera orientation (shoulder offset)
+        // targetOffset.y is height, targetOffset.x is horizontal right offset
+        Vector3 pivot = target.position + Vector3.up * targetOffset.y;
+        Vector3 targetPosition = pivot - (rotation * Vector3.forward * distance) + (rotation * Vector3.right * targetOffset.x);
 
+        // Smooth position interpolation to eliminate character controller terrain jitter
+        transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref cameraPositionVelocity, positionSmoothTime);
         transform.rotation = rotation;
-        transform.position = position;
 
         // Escape to unlock cursor, Left Click to relock
 #if ENABLE_INPUT_SYSTEM

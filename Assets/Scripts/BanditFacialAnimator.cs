@@ -6,20 +6,20 @@ public class BanditFacialAnimator : MonoBehaviour
     public float blinkIntervalMin = 3.0f;
     public float blinkIntervalMax = 6.0f;
     public float blinkDuration = 0.15f;
-    public Vector3 upperEyelidBlinkRot = new Vector3(30f, 0f, 0f);
-    public Vector3 lowerEyelidBlinkRot = new Vector3(-8f, 0f, 0f);
+    public float upperEyelidBlinkAngle = 22f; // Degrees of rotation around head's local right axis
+    public float lowerEyelidBlinkAngle = -6f;  // Degrees of rotation around head's local right axis
 
     [Header("Eye Look Settings")]
     public float maxYawAngle = 10f;
     public float maxPitchAngle = 6f;
     public float saccadeIntervalMin = 1.5f;
     public float saccadeIntervalMax = 4.0f;
-    public float eyeSpeed = 15f;
+    public float eyeSpeed = 10f;
 
     [Header("Jaw & Brow Settings")]
-    public float jawIdleMovement = 2.0f;
-    public float jawFrequency = 1.2f;
-    public float browResponseToEyes = 0.3f;
+    public float jawIdleMovement = 1.8f;      // Degrees of jaw opening
+    public float jawFrequency = 1.2f;         // Speed of jaw breathing movement
+    public float browResponseToEyes = 0.3f;    // Eyebrow movement scaling relative to vertical eye pitch
 
     // Cached bone transforms
     private Transform leftEye;
@@ -50,10 +50,11 @@ public class BanditFacialAnimator : MonoBehaviour
     private float blinkStartTime;
     private float nextBlinkTime;
 
-    private Quaternion targetEyeRot = Quaternion.identity;
-    private Quaternion currentEyeRot = Quaternion.identity;
+    private float targetYaw = 0f;
+    private float targetPitch = 0f;
+    private float currentYaw = 0f;
+    private float currentPitch = 0f;
     private float nextSaccadeTime;
-    private float currentEyePitch = 0f;
 
     private Animator animator;
 
@@ -137,16 +138,26 @@ public class BanditFacialAnimator : MonoBehaviour
             {
                 // Smooth sine-like blinking curve
                 float blinkFactor = Mathf.Sin(progress * Mathf.PI);
-                
+                float upperAngle = upperEyelidBlinkAngle * blinkFactor;
+                float lowerAngle = lowerEyelidBlinkAngle * blinkFactor;
+
+                // Eyelids are children of the eyes. To rotate them around the head's local horizontal axis (X in parent space),
+                // we transform the parent-space blink rotation into the eye's local coordinate system:
+                Quaternion leftUpperBlink = Quaternion.Inverse(leftEyeOriginalRot) * Quaternion.Euler(upperAngle, 0f, 0f) * leftEyeOriginalRot;
+                Quaternion leftLowerBlink = Quaternion.Inverse(leftEyeOriginalRot) * Quaternion.Euler(lowerAngle, 0f, 0f) * leftEyeOriginalRot;
+
+                Quaternion rightUpperBlink = Quaternion.Inverse(rightEyeOriginalRot) * Quaternion.Euler(upperAngle, 0f, 0f) * rightEyeOriginalRot;
+                Quaternion rightLowerBlink = Quaternion.Inverse(rightEyeOriginalRot) * Quaternion.Euler(lowerAngle, 0f, 0f) * rightEyeOriginalRot;
+
                 if (leftUpperEyelid != null)
-                    leftUpperEyelid.localRotation = leftUpperEyelidOriginalRot * Quaternion.Euler(upperEyelidBlinkRot * blinkFactor);
-                if (rightUpperEyelid != null)
-                    rightUpperEyelid.localRotation = rightUpperEyelidOriginalRot * Quaternion.Euler(upperEyelidBlinkRot * blinkFactor);
-                
+                    leftUpperEyelid.localRotation = leftUpperBlink * leftUpperEyelidOriginalRot;
                 if (leftLowerEyelid != null)
-                    leftLowerEyelid.localRotation = leftLowerEyelidOriginalRot * Quaternion.Euler(lowerEyelidBlinkRot * blinkFactor);
+                    leftLowerEyelid.localRotation = leftLowerBlink * leftLowerEyelidOriginalRot;
+                
+                if (rightUpperEyelid != null)
+                    rightUpperEyelid.localRotation = rightUpperBlink * rightUpperEyelidOriginalRot;
                 if (rightLowerEyelid != null)
-                    rightLowerEyelid.localRotation = rightLowerEyelidOriginalRot * Quaternion.Euler(lowerEyelidBlinkRot * blinkFactor);
+                    rightLowerEyelid.localRotation = rightLowerBlink * rightLowerEyelidOriginalRot;
             }
         }
         else if (Time.time >= nextBlinkTime)
@@ -160,23 +171,23 @@ public class BanditFacialAnimator : MonoBehaviour
     {
         if (Time.time >= nextSaccadeTime)
         {
-            float randomYaw = Random.Range(-maxYawAngle, maxYawAngle);
-            float randomPitch = Random.Range(-maxPitchAngle, maxPitchAngle);
+            targetYaw = Random.Range(-maxYawAngle, maxYawAngle);
+            targetPitch = Random.Range(-maxPitchAngle, maxPitchAngle);
             
-            // Keep track of current vertical offset to animate brows later
-            currentEyePitch = randomPitch;
-
-            targetEyeRot = Quaternion.Euler(randomPitch, randomYaw, 0f);
             ScheduleNextSaccade();
         }
 
-        // Smoothly interpolate eye gaze rotation
-        currentEyeRot = Quaternion.Slerp(currentEyeRot, targetEyeRot, eyeSpeed * Time.deltaTime);
+        // Smoothly interpolate eye gaze angles
+        currentYaw = Mathf.Lerp(currentYaw, targetYaw, eyeSpeed * Time.deltaTime);
+        currentPitch = Mathf.Lerp(currentPitch, targetPitch, eyeSpeed * Time.deltaTime);
+
+        // Apply pitch and yaw in the parent's coordinate system (faceAttach space) by multiplying on the left
+        Quaternion lookOffset = Quaternion.Euler(currentPitch, currentYaw, 0f);
 
         if (leftEye != null)
-            leftEye.localRotation = leftEyeOriginalRot * currentEyeRot;
+            leftEye.localRotation = lookOffset * leftEyeOriginalRot;
         if (rightEye != null)
-            rightEye.localRotation = rightEyeOriginalRot * currentEyeRot;
+            rightEye.localRotation = lookOffset * rightEyeOriginalRot;
     }
 
     private void ProcessJawBreathing()
@@ -187,21 +198,23 @@ public class BanditFacialAnimator : MonoBehaviour
             float breathing = Mathf.Sin(Time.time * jawFrequency);
             float jawAngle = Mathf.Max(0f, breathing) * jawIdleMovement;
             
-            jaw.localRotation = jawOriginalRot * Quaternion.Euler(jawAngle, 0f, 0f);
+            // Apply jaw opening in parent space (rotation around horizontal X axis)
+            jaw.localRotation = Quaternion.Euler(jawAngle, 0f, 0f) * jawOriginalRot;
         }
     }
 
     private void ProcessBrows()
     {
-        // Eyebrows react to vertical eye movements (saccades)
-        float browOffset = currentEyePitch * browResponseToEyes;
+        // Eyebrows react to vertical eye movements (raising/lowering in parent space)
+        float browOffset = currentPitch * browResponseToEyes;
+        Quaternion browOffsetRot = Quaternion.Euler(browOffset, 0f, 0f);
         
         if (leftBrow != null)
-            leftBrow.localRotation = leftBrowOriginalRot * Quaternion.Euler(0f, 0f, -browOffset);
+            leftBrow.localRotation = browOffsetRot * leftBrowOriginalRot;
         if (rightBrow != null)
-            rightBrow.localRotation = rightBrowOriginalRot * Quaternion.Euler(0f, 0f, browOffset);
+            rightBrow.localRotation = browOffsetRot * rightBrowOriginalRot;
         if (midBrow != null)
-            midBrow.localRotation = midBrowOriginalRot * Quaternion.Euler(0f, 0f, -browOffset * 0.5f);
+            midBrow.localRotation = Quaternion.Euler(browOffset * 0.5f, 0f, 0f) * midBrowOriginalRot;
     }
 
     private void ResetEyelids()

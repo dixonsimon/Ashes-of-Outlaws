@@ -1,0 +1,7 @@
+=== Configure Eye Materials Report ===
+- UnityEyesInnerMtl found.
+  - Shader set to Universal Render Pipeline/Lit
+  - Eye texture 'T_BanEyes' successfully assigned to _BaseMap.
+- UnityEyesOuterMtl found.
+  - Shader set to Universal Render Pipeline/Lit
+  - Successfully configured as Transparent with 0% opacity and 95% smoothness.

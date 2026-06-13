@@ -19,15 +19,18 @@ To capture a screenshot:
 
 ## 🌟 Key Features
 
-*   **Premium Over-The-Shoulder Camera**: A customized 3rd-person orbit camera (`BanditCameraOrbit`) that tracks the player closely, providing a cinematic over-the-shoulder perspective perfect for shooting and exploration.
-*   **Procedural Facial Animations**: An advanced facial animation script (`BanditFacialAnimator`) that brings the Bandit character to life using bone-driven procedural techniques:
-    *   **Natural Blinking**: Dynamic open/close eyelid movement driven by a smooth sine wave.
-    *   **Eye Saccades**: Natural, randomized look-around eye tracking.
-    *   **Jaw Breathing**: Subtle mouth/jaw opening and closing to simulate breathing when idle.
-    *   **Reactive Eyebrows**: Eyebrows that dynamically raise or lower in response to eye gaze height.
+*   **Premium Over-The-Shoulder Camera**: A customized 3rd-person orbit camera (`BanditCameraOrbit`) that tracks the player closely, providing a cinematic over-the-shoulder perspective:
+    *   **Terrain Jitter Filter**: Smooths position tracking with `Vector3.SmoothDamp` to eliminate high-frequency micro-collision jitter from the CharacterController.
+    *   **Camera-Relative Offset**: Computes the shoulder offset relative to the camera's local right vector to maintain consistent placement when turning.
+*   **Procedural Facial Animations**: An advanced facial animation script (`BanditFacialAnimator`) that brings the Bandit character to life:
+    *   **Correct Eyeball Materials**: Programmatic configuration of inner (opaque URP with iris/pupil texture) and outer (transparent, high-smoothness URP eye-glass) materials for realistic rendering.
+    *   **Parent-Space Rotations**: Corrects mirrored joint axes for blink, gaze, and brows by operating in `faceAttach` parent space.
+    *   **Procedural Eyelids & Gaze**: Natural, randomized eye saccades and blinks.
+    *   **Jaw Breathing & Reactive Eyebrows**: Subtle breathing movement on the jaw and brows reactive to gaze height.
 *   **Stabilized Locomotion**: 
-    *   Bakes character root motion position relative to the **Center of Mass** to ensure consistent trajectory.
-    *   Dynamic local X-axis hips stabilization in `AdvancedPlayerController` to eliminate side-to-side weaving, keeping movements perfectly straight.
+    *   **Damped Pelvis Stabilization**: Damps the pelvis bone's lateral sway by **75%** and slerps its local rotation towards its bind pose by **60%** in `LateUpdate()`. This eliminates side-to-side weaving/drifting while running while preserving necessary flexibility to prevent humanoid leg/IK buckling.
+    *   **Speed Smoothing & Momentum**: Implements linear speed interpolation (momentum) to synchronize physical movement with the animator, preventing foot sliding.
+
 *   **Cold Sunset Environment**: Set under Unity's default procedural skybox with warm, warm-toned sunset directional lighting for a moody, high-fidelity aesthetic.
 
 ---
@@ -56,9 +59,8 @@ Assets/
 ├── Scripts/
 │   ├── AdvancedPlayerController.cs # Dynamic locomotion controller & hips stabilizer
 │   └── BanditFacialAnimator.cs     # Procedural eye/jaw/brow face animator
-├── AllSkyFree/
-│   └── Cold Sunset/                # Main scene folder
-│       └── Cold Sunset.unity       # Active project scene
+├── Scenes/
+│   └── Main.unity                  # Main playable scene
 └── Editor/                         # Automation & scene configuration scripts
 ```
 
@@ -89,8 +91,8 @@ To run this project locally on your machine:
     *   Ensure the Unity Editor version is set to **6.4** (or `6000.4.8f1`+).
 
 3.  **Load the Main Scene**:
-    *   Once the project opens, navigate to `Assets/AllSkyFree/Cold Sunset/` in the Project panel.
-    *   Double-click to open `Cold Sunset.unity`.
+    *   Once the project opens, navigate to `Assets/Scenes/` in the Project panel.
+    *   Double-click to open `Main.unity`.
     *   Press the **Play** button at the top to enter gameplay mode.
 
 ---
